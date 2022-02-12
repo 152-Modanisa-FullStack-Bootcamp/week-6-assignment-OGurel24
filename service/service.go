@@ -3,32 +3,19 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"homework5/service/repository"
 	"net/http"
 	"os"
 )
-
-func init() {
-	loadConfig()
-}
-
-type user struct {
-	Name    string `json:"name"`
-	Balance int    `json:"balance"`
-}
 
 type configs struct {
 	InitialBalanceAmount int `json:"initialBalanceAmount"`
 	MinimumBalanceAmount int `json:"minimumBalanceAmount"`
 }
 
-var data = []user{
-	{Name: "onur", Balance: 999},
-	{Name: "ugur", Balance: 10},
-}
-
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	// Collect all users and handle error if there is any
-	users, err := json.Marshal(data)
+	users, err := json.Marshal(repository.Data)
 	if err != nil {
 		w.WriteHeader(500)
 	}
@@ -44,7 +31,7 @@ func GetSpecificUser(w http.ResponseWriter, r *http.Request, username string) {
 	index, exist := isUserExist(username)
 
 	if exist {
-		user, _ := json.Marshal(data[index])
+		user, _ := json.Marshal(repository.Data[index])
 		_, err := w.Write(user)
 		if err != nil {
 			w.WriteHeader(500)
@@ -74,8 +61,8 @@ func AddUser(w http.ResponseWriter, r *http.Request, username string) {
 	}
 
 	// Otherwise add user
-	newUser := user{username, loadConfig().InitialBalanceAmount}
-	data = append(data, newUser)
+	newUser := repository.User{username, loadConfig().InitialBalanceAmount}
+	repository.Data = append(repository.Data, newUser)
 	_, err := fmt.Fprintf(w, "User is added")
 	if err != nil {
 		w.WriteHeader(500)
@@ -111,8 +98,8 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string) {
 		w.WriteHeader(500)
 	}
 
-	if data[index].Balance+t.Balance > loadConfig().MinimumBalanceAmount {
-		data[index].Balance += t.Balance
+	if repository.Data[index].Balance+t.Balance > loadConfig().MinimumBalanceAmount {
+		repository.Data[index].Balance += t.Balance
 		_, err = fmt.Fprintf(w, "Balance is changed successfully!")
 		if err != nil {
 			w.WriteHeader(500)
@@ -125,7 +112,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string) {
 // Helper function detects if the user is existed or not
 func isUserExist(username string) (int, bool) {
 
-	for i, v := range data {
+	for i, v := range repository.Data {
 		if v.Name == username {
 			return i, true
 		}
