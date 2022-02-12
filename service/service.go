@@ -4,11 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 )
+
+func init() {
+	loadConfig()
+}
 
 type user struct {
 	Name    string `json:"name"`
 	Balance int    `json:"balance"`
+}
+
+type configs struct {
+	InitialBalanceAmount int `json:"initialBalanceAmount"`
+	MinimumBalanceAmount int `json:"minimumBalanceAmount"`
 }
 
 var data = []user{
@@ -64,7 +74,7 @@ func AddUser(w http.ResponseWriter, r *http.Request, username string) {
 	}
 
 	// Otherwise add user
-	newUser := user{username, 24}
+	newUser := user{username, loadConfig().InitialBalanceAmount}
 	data = append(data, newUser)
 	_, err := fmt.Fprintf(w, "User is added")
 	if err != nil {
@@ -101,10 +111,12 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string) {
 		w.WriteHeader(500)
 	}
 
-	data[index].Balance += t.Balance
-	_, err = fmt.Fprintf(w, "Balance is changed successfully!")
-	if err != nil {
-		w.WriteHeader(500)
+	if data[index].Balance+t.Balance > loadConfig().MinimumBalanceAmount {
+		data[index].Balance += t.Balance
+		_, err = fmt.Fprintf(w, "Balance is changed successfully!")
+		if err != nil {
+			w.WriteHeader(500)
+		}
 	}
 
 	return
@@ -119,4 +131,17 @@ func isUserExist(username string) (int, bool) {
 		}
 	}
 	return -1, false
+}
+
+func loadConfig() configs {
+
+	configData, err := os.ReadFile(".config/local.json")
+	if err != nil {
+		panic(err)
+	}
+
+	var currentConfigs configs
+	err = json.Unmarshal(configData, &currentConfigs)
+
+	return currentConfigs
 }
