@@ -13,9 +13,9 @@ type configs struct {
 	MinimumBalanceAmount int `json:"minimumBalanceAmount"`
 }
 
-func GetAllUsers(w http.ResponseWriter, r *http.Request) {
+func GetAllUsers(w http.ResponseWriter, r *http.Request, data []repository.User) {
 	// Collect all users and handle error if there is any
-	users, err := json.Marshal(repository.Data)
+	users, err := json.Marshal(data)
 	if err != nil {
 		w.WriteHeader(500)
 	}
@@ -27,11 +27,11 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetSpecificUser(w http.ResponseWriter, r *http.Request, username string) {
-	index, exist := isUserExist(username)
+func GetSpecificUser(w http.ResponseWriter, r *http.Request, username string, data []repository.User) {
+	_, exist := isUserExist(username, data)
 
 	if exist {
-		user, _ := json.Marshal(repository.Data[index])
+		user, _ := json.Marshal(data)
 		_, err := w.Write(user)
 		if err != nil {
 			w.WriteHeader(500)
@@ -48,8 +48,8 @@ func GetSpecificUser(w http.ResponseWriter, r *http.Request, username string) {
 	return
 }
 
-func AddUser(w http.ResponseWriter, r *http.Request, username string) {
-	_, exist := isUserExist(username)
+func AddUser(w http.ResponseWriter, r *http.Request, username string, data []repository.User) []repository.User {
+	_, exist := isUserExist(username, data)
 
 	// If user is already exist return 417
 	if exist {
@@ -62,17 +62,18 @@ func AddUser(w http.ResponseWriter, r *http.Request, username string) {
 
 	// Otherwise add user
 	newUser := repository.User{username, loadConfig().InitialBalanceAmount}
-	repository.Data = append(repository.Data, newUser)
+	data = append(data, newUser)
 	_, err := fmt.Fprintf(w, "User is added")
+	fmt.Println(data)
 	if err != nil {
 		w.WriteHeader(500)
 	}
 
-	return
+	return data
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request, username string) {
-	index, exist := isUserExist(username)
+func UpdateUser(w http.ResponseWriter, r *http.Request, username string, data []repository.User) []repository.User {
+	index, exist := isUserExist(username, data)
 
 	//If user is not exist return 404
 	if !exist {
@@ -82,7 +83,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string) {
 			w.WriteHeader(500)
 		}
 
-		return
+		return data
 	}
 
 	// Otherwise create a balance update info struct and update user balance
@@ -98,21 +99,21 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string) {
 		w.WriteHeader(500)
 	}
 
-	if repository.Data[index].Balance+t.Balance > loadConfig().MinimumBalanceAmount {
-		repository.Data[index].Balance += t.Balance
+	if data[index].Balance+t.Balance > loadConfig().MinimumBalanceAmount {
+		data[index].Balance += t.Balance
 		_, err = fmt.Fprintf(w, "Balance is changed successfully!")
 		if err != nil {
 			w.WriteHeader(500)
 		}
 	}
 
-	return
+	return data
 }
 
 // Helper function detects if the user is existed or not
-func isUserExist(username string) (int, bool) {
+func isUserExist(username string, data []repository.User) (int, bool) {
 
-	for i, v := range repository.Data {
+	for i, v := range data {
 		if v.Name == username {
 			return i, true
 		}

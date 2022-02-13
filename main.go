@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"homework5/repository"
 	"homework5/service"
 	"net/http"
 )
@@ -19,22 +20,22 @@ func mainController(w http.ResponseWriter, r *http.Request) {
 	// Get Redirection
 	if r.Method == "GET" {
 		if url != "/" {
-			service.GetSpecificUser(w, r, url[1:])
+			service.GetSpecificUser(w, r, url[1:], repository.Data)
 			return
 		}
-		service.GetAllUsers(w, r)
+		service.GetAllUsers(w, r, repository.Data)
 		return
 	}
 
 	// Put Redirection
 	if r.Method == "PUT" {
-		service.AddUser(w, r, url[1:])
+		repository.Data = service.AddUser(w, r, url[1:], repository.Data)
 		return
 	}
 
 	// Post Redirection
 	if r.Method == "POST" {
-		service.UpdateUser(w, r, url[1:])
+		repository.Data = service.UpdateUser(w, r, url[1:], repository.Data)
 		return
 	}
 
