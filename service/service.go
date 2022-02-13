@@ -3,7 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"homework5/service/repository"
+	"homework5/repository"
 	"net/http"
 	"os"
 )

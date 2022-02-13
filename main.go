@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	http.HandleFunc("/", mainController)
 	err := http.ListenAndServe(":8080", nil)
 	fmt.Println(err)

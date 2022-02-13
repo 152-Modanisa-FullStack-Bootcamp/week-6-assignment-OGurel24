@@ -5,8 +5,6 @@ type User struct {
 	Balance int    `json:"balance"`
 }
 
-
-
 var Data = []User{
 	{Name: "onur", Balance: 999},
 	{Name: "ugur", Balance: 10},
