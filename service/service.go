@@ -107,8 +107,11 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string, data []
 			fmt.Println(err)
 			return data
 		}
+		return data
 	}
 
+	w.WriteHeader(http.StatusNotAcceptable)
+	fmt.Fprint(w, "Balance did not change, out of bounds!")
 	return data
 }
 
@@ -124,11 +127,9 @@ func isUserExist(username string, data []repository.User) (int, bool) {
 
 func LoadConfig() configs {
 
-	configData, err := os.ReadFile(".config/local.json")
-	wd, _ := os.Getwd()
-	fmt.Println(24, wd, 24)
+	configData, err := os.ReadFile("/Users/onurgurel/Desktop/bootcamp/week-6-assignment-OGurel24/.config/local.json")
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 
 	var currentConfigs configs

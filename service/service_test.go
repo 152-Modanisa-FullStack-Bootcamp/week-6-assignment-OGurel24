@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -175,4 +176,69 @@ func TestAddUserFail(t *testing.T) {
 	assert.Equal(t, 417, res.StatusCode)
 	assert.Equal(t, "User is already exist", string(data))
 	assert.Equal(t, mockDBInitialLength, len(mockDB))
+}
+
+func TestUpdateUserInBounds(t *testing.T) {
+	//Tries to add exist user and gets 417
+
+	// Mock DB
+	mockDB := make([]repository.User, len(repository.Data))
+	copy(mockDB, repository.Data)
+	newUser := mockDB[0]
+
+	// Send request
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", newUser.Name),
+		strings.NewReader("{ \"balance\": 200 }"))
+	w := httptest.NewRecorder()
+	mockDB = service.UpdateUser(w, req, newUser.Name, mockDB)
+	res := w.Result()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}(res.Body)
+
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	assert.Equal(t, 200, res.StatusCode)
+	assert.Equal(t, "Balance is changed successfully!", string(data))
+}
+
+func TestUpdateUserOutBounds(t *testing.T) {
+	//Tries to add exist user and gets 417
+
+	// Mock DB
+	mockDB := make([]repository.User, len(repository.Data))
+	copy(mockDB, repository.Data)
+	newUser := mockDB[0]
+
+	// Send request
+	req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/%s", newUser.Name),
+		strings.NewReader("{ \"balance\": -999 }"))
+	w := httptest.NewRecorder()
+	mockDB = service.UpdateUser(w, req, newUser.Name, mockDB)
+	res := w.Result()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}(res.Body)
+
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	assert.Equal(t, 406, res.StatusCode) // New balance is out of bounds, not permitted
+	assert.Equal(t, "Balance did not change, out of bounds!", string(data))
+	assert.Equal(t, newUser, mockDB[0]) // User data was not changed
 }
