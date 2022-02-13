@@ -143,6 +143,8 @@ func TestAddUserSuccess(t *testing.T) {
 }
 
 func TestAddUserFail(t *testing.T) {
+	//Tries to add exist user and gets 417
+
 	// Mock DB
 	mockDB := make([]repository.User, len(repository.Data))
 	copy(mockDB, repository.Data)
@@ -173,5 +175,4 @@ func TestAddUserFail(t *testing.T) {
 	assert.Equal(t, 417, res.StatusCode)
 	assert.Equal(t, "User is already exist", string(data))
 	assert.Equal(t, mockDBInitialLength, len(mockDB))
-
 }

@@ -124,7 +124,9 @@ func isUserExist(username string, data []repository.User) (int, bool) {
 
 func LoadConfig() configs {
 
-	configData, err := os.ReadFile("/Users/onurgurel/Desktop/bootcamp/week-6-assignment-OGurel24/.config/local.json")
+	configData, err := os.ReadFile(".config/local.json")
+	wd, _ := os.Getwd()
+	fmt.Println(24, wd, 24)
 	if err != nil {
 		panic(err)
 	}
