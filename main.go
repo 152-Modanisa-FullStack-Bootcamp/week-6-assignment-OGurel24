@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+
 	http.HandleFunc("/", mainController)
 	err := http.ListenAndServe(":8080", nil)
 	fmt.Println(err)
@@ -29,13 +30,13 @@ func mainController(w http.ResponseWriter, r *http.Request) {
 
 	// Put Redirection
 	if r.Method == "PUT" {
-		repository.Data = service.AddUser(w, r, url[1:], repository.Data)
+		repository.Data=service.AddUser(w, r, url[1:], repository.Data)
 		return
 	}
 
 	// Post Redirection
 	if r.Method == "POST" {
-		repository.Data = service.UpdateUser(w, r, url[1:], repository.Data)
+		repository.Data=service.UpdateUser(w, r, url[1:], repository.Data)
 		return
 	}
 

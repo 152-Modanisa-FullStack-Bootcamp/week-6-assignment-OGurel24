@@ -28,15 +28,15 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request, data []repository.User)
 }
 
 func GetSpecificUser(w http.ResponseWriter, r *http.Request, username string, data []repository.User) {
-	_, exist := isUserExist(username, data)
+	index, exist := isUserExist(username, data)
 
 	if exist {
-		user, _ := json.Marshal(data)
-		_, err := w.Write(user)
+		user, err := json.Marshal(data[index])
 		if err != nil {
-			w.WriteHeader(500)
+			fmt.Println(err)
+			return
 		}
-
+		w.Write(user)
 		return
 	}
 
@@ -58,13 +58,13 @@ func AddUser(w http.ResponseWriter, r *http.Request, username string, data []rep
 		if err != nil {
 			w.WriteHeader(500)
 		}
+		return data
 	}
 
 	// Otherwise add user
 	newUser := repository.User{username, loadConfig().InitialBalanceAmount}
 	data = append(data, newUser)
 	_, err := fmt.Fprintf(w, "User is added")
-	fmt.Println(data)
 	if err != nil {
 		w.WriteHeader(500)
 	}
@@ -81,6 +81,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string, data []
 		_, err := fmt.Fprintf(w, "User could not be found!")
 		if err != nil {
 			w.WriteHeader(500)
+			return data
 		}
 
 		return data
@@ -90,7 +91,6 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string, data []
 	type updateInfo struct {
 		Balance int `json:"balance"`
 	}
-
 	decoder := json.NewDecoder(r.Body)
 	var t updateInfo
 	err := decoder.Decode(&t)
@@ -104,6 +104,8 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string, data []
 		_, err = fmt.Fprintf(w, "Balance is changed successfully!")
 		if err != nil {
 			w.WriteHeader(500)
+			fmt.Println(err)
+			return data
 		}
 	}
 
@@ -112,7 +114,6 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string, data []
 
 // Helper function detects if the user is existed or not
 func isUserExist(username string, data []repository.User) (int, bool) {
-
 	for i, v := range data {
 		if v.Name == username {
 			return i, true
