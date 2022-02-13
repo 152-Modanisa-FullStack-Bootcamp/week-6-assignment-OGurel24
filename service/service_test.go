@@ -66,41 +66,112 @@ func TestGetAllUsersWithPost(t *testing.T) {
 		}
 	}(res.Body)
 
-	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }
 
 func TestGetSpecificUsersWithGet(t *testing.T) {
-	url := "http://localhost:8080/onur"
-	method := "GET"
+	// Mock DB
+	mockDB := make([]repository.User, len(repository.Data))
+	copy(mockDB, repository.Data)
 
-
-	client := &http.Client {
-	}
-	req, err := http.NewRequest(method, url, nil)
-
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
-	req.Header.Add("Content-Type", "application/json")
-
-	res, err := client.Do(req)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
+	// Send request
+	req := httptest.NewRequest(http.MethodGet, "/Onur", nil)
+	w := httptest.NewRecorder()
+	service.GetSpecificUser(w, req, "Onur", mockDB)
+	res := w.Result()
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
 			fmt.Println(err)
-			panic(err)
+			return
 		}
 	}(res.Body)
 
-	body, err := ioutil.ReadAll(res.Body)
+	//Read response
+	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println(err)
-		panic(err)
+		return
 	}
-	fmt.Println(string(body))
+
+	//Write returned data to variable
+	var user repository.User
+	err = json.Unmarshal(data, &user)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	// Assert status code, response length and after whole data
+	assert.Equal(t, 200, res.StatusCode)
+	assert.Equal(t, mockDB[0], user)
+}
+
+func TestAddUserSuccess(t *testing.T) {
+	// Mock DB
+	mockDB := make([]repository.User, len(repository.Data))
+	copy(mockDB, repository.Data)
+	mockDBInitialLength := len(mockDB)
+
+	newUser := repository.User{
+		Name: "onur2"}
+
+	// Send request
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s", newUser.Name), nil)
+	w := httptest.NewRecorder()
+	mockDB = service.AddUser(w, req, newUser.Name, mockDB)
+	res := w.Result()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}(res.Body)
+
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	assert.Equal(t, 200, res.StatusCode)
+	assert.Equal(t, "User is added", string(data))
+	assert.Equal(t, mockDBInitialLength+1, len(mockDB))
+	assert.Equal(t, mockDB[mockDBInitialLength].Name, newUser.Name)
+	assert.Equal(t, mockDB[mockDBInitialLength].Balance, service.LoadConfig().InitialBalanceAmount)
+
+}
+
+func TestAddUserFail(t *testing.T) {
+	// Mock DB
+	mockDB := make([]repository.User, len(repository.Data))
+	copy(mockDB, repository.Data)
+	mockDBInitialLength := len(mockDB)
+
+	newUser := repository.User{
+		Name: "Onur"}
+
+	// Send request
+	req := httptest.NewRequest(http.MethodPut, fmt.Sprintf("/%s", newUser.Name), nil)
+	w := httptest.NewRecorder()
+	mockDB = service.AddUser(w, req, newUser.Name, mockDB)
+	res := w.Result()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}(res.Body)
+
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	assert.Equal(t, 417, res.StatusCode)
+	assert.Equal(t, "User is already exist", string(data))
+	assert.Equal(t, mockDBInitialLength, len(mockDB))
+
 }

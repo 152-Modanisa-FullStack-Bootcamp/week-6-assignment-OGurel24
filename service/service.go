@@ -62,7 +62,7 @@ func AddUser(w http.ResponseWriter, r *http.Request, username string, data []rep
 	}
 
 	// Otherwise add user
-	newUser := repository.User{username, loadConfig().InitialBalanceAmount}
+	newUser := repository.User{username, LoadConfig().InitialBalanceAmount}
 	data = append(data, newUser)
 	_, err := fmt.Fprintf(w, "User is added")
 	if err != nil {
@@ -99,7 +99,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request, username string, data []
 		w.WriteHeader(500)
 	}
 
-	if data[index].Balance+t.Balance > loadConfig().MinimumBalanceAmount {
+	if data[index].Balance+t.Balance > LoadConfig().MinimumBalanceAmount {
 		data[index].Balance += t.Balance
 		_, err = fmt.Fprintf(w, "Balance is changed successfully!")
 		if err != nil {
@@ -122,9 +122,9 @@ func isUserExist(username string, data []repository.User) (int, bool) {
 	return -1, false
 }
 
-func loadConfig() configs {
+func LoadConfig() configs {
 
-	configData, err := os.ReadFile(".config/local.json")
+	configData, err := os.ReadFile("/Users/onurgurel/Desktop/bootcamp/week-6-assignment-OGurel24/.config/local.json")
 	if err != nil {
 		panic(err)
 	}
